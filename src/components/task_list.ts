@@ -11,9 +11,9 @@ const actions = (foci, lenses) => ({
 })
 
 const view = (foci, actions, navigate) => m('div', [
-    m('button', {onclick: () => navigate('Home')}, 'Go home'),
+    m('button', {onclick: navigate('Home')}, 'Go home'),
     m('div', foci.currentTask() || 'no'),
-    m('div', R.map(task => m('div', task.name), foci.taskList()))
+    m('div', R.map(task => m('div', {onclick: navigate('Task', {id: task.id})}, task.name), foci.taskList()))
 ])
 
 export default {

@@ -43,6 +43,7 @@ export const createApp = (initialState: Store) => {
 
     const navigate = (name: string, params: any) => {
         const routePath = R.head(R.keys(R.filter(route => route.name === name, routeMap)))
+        console.log(routePath)
         const routeComponent = routeMap[routePath].component
         params = params || {}
         window.history.pushState({}, "", `#${urlMapper.stringify(routePath, params)}`)
@@ -93,7 +94,7 @@ export const createApp = (initialState: Store) => {
             lenses,
             actions,
             foci,
-            view: () => componentTemplate.view(foci, actions, navigate)
+            view: () => componentTemplate.view(foci, actions, (name, params) => () => navigate(name, params))
         }
 
         components[name] = component

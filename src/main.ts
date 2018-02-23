@@ -7,7 +7,7 @@ import TaskInput from './components/task_input'
 const initialState = {
     planning: {
         task_input: 'New task',
-        tasks: [{name: 'Test'}]
+        tasks: [{id: 1, name: 'Test'}]
     }
 }
 
@@ -19,7 +19,8 @@ app.createComponent('Input', TaskInput)
 app.createComponent('Main', {
     lenses: app.noLenses,
     actions: app.noActions, 
-    view: () => m('div', [
+    view: (foci, actions, navigate) => m('div', [
+        m('button', {onclick: navigate('Tasks')}, 'Go to tasks'),
         app.components['Input'].view(),
     ])
 })
