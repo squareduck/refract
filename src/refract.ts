@@ -30,41 +30,78 @@ type ComponentMap = {[key: string]: Component}
 const urlMapper = Mapper()
 
 export const createApp = (initialState: Store) => {
+    /*
+     * Stream of update functions.
+     * All actions defined by components end up in this stream.
+     *
+     * All update functions have the same signature:
+     * (store: Store) => Store
+     */
     const updateStream = stream()
+
+    /*
+     * Reducer stream over updateStream.
+     * Latest value in this stream is our current global Store.
+     *
+     */
     const applyUpdate = (store: Store, updateFn: any): Store => updateFn(store)
     const storeStream = stream.scan(applyUpdate, initialState, updateStream)
 
     /*
+     *
+     * -------
      * Routing
+     * -------
+     *
+     * Route is a named URL mapped to a component and a list of update functions.
+     *
      */
 
+    // A map from URL to route name
     let routeMap = {}
-    let routeActions = {}
+    // A map from route name to list of update functions
+    let routeUpdates = {}
 
-    const navigate = (name: string, params: any) => {
+    /*
+     * Navigate takes the name of the route and optional placeholder params.
+     * Changes current top component to route component.
+     * Changes browser url.
+     * Pushes all update functions for the current route into updateStream
+     *
+     */
+    const navigate = (name: string, params = {}: any) => {
         const routePath = R.head(R.keys(R.filter(route => route.name === name, routeMap)))
-        console.log(routePath)
         const routeComponent = routeMap[routePath].component
-        params = params || {}
         window.history.pushState({}, "", `#${urlMapper.stringify(routePath, params)}`)
         topComponent = () => routeComponent
-        const updates = routeActions[name]
+        const updates = routeUpdates[name]
         R.map(update => updateStream(update(params)), updates)
     }
 
+    /*
+     * Add a new route
+     */
     const route = (name: string, path: string, component: Component, updates: Function[]) => {
         routeMap[path] = {name, component}
-        routeActions[name] = updates
+        routeUpdates[name] = updates
     }
 
+    /*
+     * Add a new subroute.
+     * Retains the component of parent route.
+     * Adds its own update functions at the end of parent route update list.
+     */
     const subroute = (name: string, parentName: string, path: string, updates: Function[]) => {
         const parentRoute = R.filter(route => route.name === parentName, routeMap)
         const parentPath = R.head(R.keys(parentRoute))
         routeMap[parentPath + path] = {name, component: parentRoute[parentPath].component}
         console.log(routeMap)
-        routeActions[name] = R.concat(routeActions[parentName], updates)
+        routeUpdates[name] = R.concat(routeUpdates[parentName], updates)
     }
 
+    /*
+     * Resolve browser URL into route
+     */
     const resolveRoute = () => {
         const route = document.location.hash.substring(1)
         const resolved = urlMapper.map(route, routeMap)
@@ -75,14 +112,47 @@ export const createApp = (initialState: Store) => {
     }
 
     /*
+     *
+     * ----------
      * Components
+     * ----------
+     *
      */
 
+    // A map of all components created for the application (name: component)
     const components: ComponentMap = {}
+    // A focus is a read only lens into Store
     const focus = (lens: R.Lens) => R.view(lens, storeStream())
+    /*
+     * Helper placeholder functions for component templates.
+     * {
+     *     lenses: noLenses,
+     *     actions: noActions,
+     *     view: ...
+     * }
+     *
+     */
     const noLenses = {}
     const noActions = () => ({})
 
+    /*
+     * Creates a new component from template in the context of current app.
+     * This makes components aware of app-specific streams (update and store).
+     * Also registers component by name in 'components'
+     *
+     * A component template is a simple object:
+     * {
+     *     lenses: {name: [paths], ...}, // map paths in the global store to component specific accessors
+     *     actions: (foci, lenses, navigate) => ({name: (params) => <update function>}), // describe possible update functions
+     *     view: (foci, actions, navigate) => <mithril virtual nodes> // describe view
+     * }
+     *
+     * foci: a map of read-only accessors for each lens path described in component template
+     * lenses: a map of lenses usable for updating the store
+     * actions: a map of actions ready to be associated with events {onclick: actions.myaction}
+     * navigate: a function that allows to invoke any registered route with optional params
+     *
+     */
     const createComponent = (name: string, componentTemplate: ComponentTemplate): Component => {
         const lenses: LensMap = R.reduce((acc, key) => R.assoc(key, R.lensPath(componentTemplate.lenses[key]), acc), {}, R.keys(componentTemplate.lenses))
         const foci = R.reduce((acc, key) => R.assoc(key, () => focus(lenses[key]), acc), {}, R.keys(lenses))
@@ -103,7 +173,11 @@ export const createApp = (initialState: Store) => {
     }
 
     /*
-     * App
+     *
+     * -----------
+     * Application
+     * -----------
+     *
      */
 
     let topComponent = () => components['Main']
