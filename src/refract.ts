@@ -157,6 +157,7 @@ export const createApp = (initialState: Store) => {
         }
 
         const component = {
+            paths,
             lenses,
             actions,
             foci,
