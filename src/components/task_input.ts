@@ -2,15 +2,12 @@ import m from 'mithril'
 import * as R from 'ramda'
 
 const lenses = {
-    taskList: ['planning', 'tasks']
+    taskList: ['planning', 'tasks'],
     input: ['planning', 'task_input']
 }
 
 const actions = (foci, lenses) => ({
-    updateValue: (value) => {
-        console.log(value)
-        return R.set(lenses.input, value)
-    },
+    updateValue: (value) => R.set(lenses.input, value),
     add: () => R.set(lenses.taskList, R.append({name: foci.input()}, foci.taskList()))
 })
 

@@ -13,12 +13,28 @@ const initialState = {
 
 const app = createApp(initialState)
 
-app.createComponent('List', TaskList.lenses, TaskList.actions, TaskList.view)
-app.createComponent('Input', TaskInput.lenses, TaskInput.actions, TaskInput.view)
+app.createComponent('Tasks', TaskList)
+app.createComponent('Input', TaskInput)
 
-app.createComponent('Main', app.noLenses, app.noActions, (foci, actions) => m('div', [
-    app.components['Input'].view(),
-    app.components['List'].view(),
-]))
+app.createComponent('Main', {
+    lenses: app.noLenses,
+    actions: app.noActions, 
+    view: () => m('div', [
+        app.components['Input'].view(),
+    ])
+})
+
+
+app.route('Home', '/', app.components.Main, [
+    () => R.assocPath(['router', 'page'], 'Main')
+])
+
+app.route('Tasks', '/tasks', app.components.Tasks, [
+    () => R.assocPath(['router', 'page'], 'Tasks')
+])
+
+app.subroute('Task', 'Tasks', '/:id', [
+    ({id}) => R.assocPath(['router', 'task_id'], id)
+])
 
 app.start(document.body)

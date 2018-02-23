@@ -18,6 +18,10 @@ mithril@^1.1.6:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/mithril/-/mithril-1.1.6.tgz#bd2cc0de3d3c86076a6a7a30367a601a1bd108f3"
 
+path-to-regexp@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-2.1.0.tgz#7e30f9f5b134bd6a28ffc2e3ef1e47075ac5259b"
+
 ramda@^0.25.0:
   version "0.25.0"
   resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.25.0.tgz#8fdf68231cffa90bc2f9460390a0cb74a29b29a9"
@@ -29,3 +33,14 @@ seamless-immutable@^7.1.3:
 typescript@^2.7.2:
   version "2.7.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.7.2.tgz#2d615a1ef4aee4f574425cdff7026edf81919836"
+
+url-mapper@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/url-mapper/-/url-mapper-2.0.0.tgz#bf88f791f184d2ccd62124f1e72e0fe98bf0c866"
+  dependencies:
+    path-to-regexp "^2.1.0"
+    urlon "^3.0.1"
+
+urlon@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/urlon/-/urlon-3.0.1.tgz#f1b38d004ad8a6c62403677a329dd31dafb622dd"
