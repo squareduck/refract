@@ -54,6 +54,7 @@ export const createApp = (initialState: Store) => {
      * -------
      *
      * Route is a named URL mapped to a component and a list of update functions.
+     * If no routes were defined the app will use component with name 'Main' as top component.
      *
      */
 
@@ -180,8 +181,15 @@ export const createApp = (initialState: Store) => {
      *
      */
 
+
+    // Returns current top component.
+    // Route navigation can change this value.
+    // By default we expect a component with name 'Main' to be registered.
     let topComponent = () => components['Main']
 
+    // Start the app
+    // Try to resolve current URL as route
+    // Start store stream
     const start = (rootElement: HTMLElement) => {
         if (R.keys(routeMap).length > 0) {
             window.onpopstate = resolveRoute
