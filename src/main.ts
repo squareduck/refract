@@ -1,41 +1,40 @@
 import m from 'mithril'
 import * as R from 'ramda'
 import { createApp } from './refract'
-import TaskList from './components/task_list'
-import TaskInput from './components/task_input'
+import Tasks from './components/tasks'
+import Home from './components/home'
 
 const initialState = {
     planning: {
-        task_input: 'New task',
-        tasks: [{id: 1, name: 'Test'}]
+        taskInput: 'New task',
+        tasks: [{id: 1, name: 'First task'}]
+    },
+    writing: {
+        notes: [{id: 1, name: 'First note'}]
     }
 }
 
-const app = createApp(initialState)
+export const app = createApp(initialState)
 
-app.createComponent('Tasks', TaskList)
-app.createComponent('Input', TaskInput)
-
-app.createComponent('Main', {
-    lenses: app.noLenses,
-    actions: app.noActions, 
-    view: (foci, actions, navigate) => m('div', [
-        m('button', {onclick: navigate('Tasks')}, 'Go to tasks'),
-        app.components['Input'].view(),
-    ])
+const tasks = app.createComponent(Tasks, {
+    selectedTask: ['planning', 'currentTask']
 })
 
+const home = app.createComponent(Home, {
+    tasks: ['planning', 'tasks'],
+    notes: ['writing', 'notes'],
+})
 
-app.route('Home', '/', app.components.Main, [
-    () => R.assocPath(['router', 'page'], 'Main')
+app.route('Home', '/', home, [
+     () => R.assocPath(['router', 'page'], 'Home')
 ])
 
-app.route('Tasks', '/tasks', app.components.Tasks, [
+app.route('Tasks', '/tasks', tasks, [
     () => R.assocPath(['router', 'page'], 'Tasks')
 ])
 
 app.subroute('Task', 'Tasks', '/:id', [
-    ({id}) => R.assocPath(['router', 'task_id'], id)
+    ({id}) => R.assocPath(['planning', 'currentTask'], id)
 ])
 
 app.start(document.body)

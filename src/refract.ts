@@ -5,7 +5,7 @@ import * as R from 'ramda'
 import Mapper from 'url-mapper'
 
 interface ComponentTemplate {
-    lenses: {[key: string]: (string | number)[]}
+    sockets: string[]
     actions: Function
     view: Function
 }
@@ -120,30 +120,19 @@ export const createApp = (initialState: Store) => {
      *
      */
 
-    // A map of all components created for the application (name: component)
-    const components: ComponentMap = {}
     // A focus is a read only lens into Store
     const focus = (lens: R.Lens) => R.view(lens, storeStream())
-    /*
-     * Helper placeholder functions for component templates.
-     * {
-     *     lenses: noLenses,
-     *     actions: noActions,
-     *     view: ...
-     * }
-     *
-     */
-    const noLenses = {}
-    const noActions = () => ({})
 
     /*
      * Creates a new component from template in the context of current app.
      * This makes components aware of app-specific streams (update and store).
-     * Also registers component by name in 'components'
+     *
+     * Each time you create a new component from template, you are required to
+     * provide a lense path for each socket defined on it.
      *
      * A component template is a simple object:
      * {
-     *     lenses: {name: [paths], ...}, // map paths in the global store to component specific accessors
+     *     sockets: ['name', ...], // for each socket a lens and focus will be created
      *     actions: (foci, lenses, navigate) => ({name: (params) => <update function>}), // describe possible update functions
      *     view: (foci, actions, navigate) => <mithril virtual nodes> // describe view
      * }
@@ -154,21 +143,25 @@ export const createApp = (initialState: Store) => {
      * navigate: a function that allows to invoke any registered route with optional params
      *
      */
-    const createComponent = (name: string, componentTemplate: ComponentTemplate): Component => {
-        const lenses: LensMap = R.reduce((acc, key) => R.assoc(key, R.lensPath(componentTemplate.lenses[key]), acc), {}, R.keys(componentTemplate.lenses))
+    const createComponent = (componentTemplate: ComponentTemplate, paths: {[key: string]: string[]}): Component => {
+        const lenses: LensMap = R.reduce((acc, key) => R.assoc(key, R.lensPath(paths[key]), acc), {}, componentTemplate.sockets)
         const foci = R.reduce((acc, key) => R.assoc(key, () => focus(lenses[key]), acc), {}, R.keys(lenses))
         const actionMap = componentTemplate.actions(foci, lenses, navigate)
         const actions = R.reduce((acc, key) => R.assoc(key, (...args: any[]) => updateStream(actionMap[key](...args)), acc), {}, R.keys(actionMap))
 
+        const viewTools = {
+            createComponent,
+            foci,
+            actions,
+            navigate: (name, params) => () => navigate(name, params)
+        }
+
         const component = {
-            name,
             lenses,
             actions,
             foci,
-            view: () => componentTemplate.view(foci, actions, (name, params) => () => navigate(name, params))
+            view: () => componentTemplate.view(viewTools)
         }
-
-        components[name] = component
 
         return component
     }
@@ -185,7 +178,7 @@ export const createApp = (initialState: Store) => {
     // Returns current top component.
     // Route navigation can change this value.
     // By default we expect a component with name 'Main' to be registered.
-    let topComponent = () => components['Main']
+    let topComponent = () => {}
 
     // Start the app
     // Try to resolve current URL as route
@@ -204,10 +197,7 @@ export const createApp = (initialState: Store) => {
 
     return {
         storeStream,
-        components,
         focus,
-        noLenses,
-        noActions,
         createComponent,
         route,
         subroute,
